@@ -12,17 +12,11 @@
       "src": "client/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build",
-        "installCommand": "npm install",
-        "buildCommand": "npm run build"
+        "distDir": "build"
       }
     }
   ],
   "routes": [
-    {
-      "src": "/health",
-      "dest": "/server.js"
-    },
     {
       "src": "/api/(.*)",
       "dest": "/server.js"
@@ -32,20 +26,11 @@
       "dest": "/server.js"
     },
     {
-      "src": "/static/(.*)",
-      "dest": "/client/static/$1"
-    },
-    {
       "src": "/(.*)",
       "dest": "/client/$1"
     }
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "server.js": {
-      "maxDuration": 30
-    }
   }
 }
