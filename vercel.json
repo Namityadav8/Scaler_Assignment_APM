@@ -5,32 +5,106 @@
       "src": "server.js",
       "use": "@vercel/node",
       "config": {
-        "maxDuration": 30
+        "maxLambdaSize": "15mb"
       }
     },
     {
       "src": "client/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build"
+        "distDir": "build",
+        "buildCommand": "npm run build",
+        "installCommand": "npm install"
       }
     }
   ],
   "routes": [
     {
+      "src": "/health",
+      "dest": "/server.js",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
+    },
+    {
       "src": "/api/(.*)",
-      "dest": "/server.js"
+      "dest": "/server.js",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
     },
     {
       "src": "/socket.io/(.*)",
-      "dest": "/server.js"
+      "dest": "/server.js",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "/client/static/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
+      "dest": "/client/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
     },
     {
       "src": "/(.*)",
-      "dest": "/client/$1"
+      "dest": "/client/index.html",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      }
     }
   ],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "functions": {
+    "server.js": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
 }
