@@ -69,6 +69,7 @@ app.use('/api/analytics', analyticsRoutes);
 
 // Serve static files from React build in production
 if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the build directory
   app.use(express.static(path.join(__dirname, 'client/build')));
   
   // Serve React app for all non-API routes
