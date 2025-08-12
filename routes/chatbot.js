@@ -3,38 +3,80 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 
 // In-memory storage for demo (use database in production)
-let chatSessions = new Map();
-let leadData = new Map();
+// In production, this should be replaced with Redis or a database
+const chatSessions = new Map();
+const leadData = new Map();
+
+// Rate limiting for production
+const rateLimit = require('express-rate-limit');
+
+const chatLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many chat requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiting to chat endpoints
+router.use(chatLimiter);
 
 // Start new chat session
 router.post('/start', (req, res) => {
   try {
+    // Input validation
+    const { userId, userInfo } = req.body;
+    
+    if (!userId && !userInfo) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'User information is required' 
+      });
+    }
+    
     const sessionId = uuidv4();
-    const userId = req.body.userId || uuidv4();
+    const finalUserId = userId || uuidv4();
     
     const session = {
       sessionId,
-      userId,
-      startTime: new Date(),
+      userId: finalUserId,
+      startTime: new Date().toISOString(),
+      lastActivity: new Date().toISOString(),
       messages: [],
       leadScore: 0,
       stage: 'cold', // cold, warm, hot
       interests: [],
       experience: null,
-      goals: []
+      goals: [],
+      userInfo: userInfo || {},
+      status: 'active'
     };
     
     chatSessions.set(sessionId, session);
-    leadData.set(userId, session);
+    leadData.set(finalUserId, session);
     
-    res.json({
+    // Clean up old sessions (memory management)
+    cleanupOldSessions();
+    
+    res.status(201).json({
       success: true,
       sessionId,
-      userId,
-      message: "Chat session started successfully"
+      userId: finalUserId,
+      message: "Chat session started successfully",
+      session: {
+        sessionId,
+        userId: finalUserId,
+        startTime: session.startTime,
+        stage: session.stage
+      }
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Error starting chat session:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to start chat session',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -124,6 +166,13 @@ function calculateLeadScore(session) {
   // Interests score
   score += session.interests.length * 3;
   
+  // Time-based engagement (recent activity gets higher score)
+  if (session.lastActivity) {
+    const hoursSinceLastActivity = (Date.now() - new Date(session.lastActivity).getTime()) / (1000 * 60 * 60);
+    if (hoursSinceLastActivity < 1) score += 10;
+    else if (hoursSinceLastActivity < 24) score += 5;
+  }
+  
   return Math.min(score, 100);
 }
 
@@ -161,5 +210,52 @@ function generateRecommendations(session) {
   
   return recommendations;
 }
+
+// Cleanup old sessions to prevent memory leaks
+function cleanupOldSessions() {
+  const now = Date.now();
+  const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+  
+  for (const [sessionId, session] of chatSessions.entries()) {
+    const sessionAge = now - new Date(session.startTime).getTime();
+    if (sessionAge > maxAge) {
+      chatSessions.delete(sessionId);
+      if (session.userId) {
+        leadData.delete(session.userId);
+      }
+    }
+  }
+}
+
+// Get session statistics
+router.get('/stats', (req, res) => {
+  try {
+    const stats = {
+      totalSessions: chatSessions.size,
+      activeSessions: Array.from(chatSessions.values()).filter(s => s.status === 'active').length,
+      totalLeads: leadData.size,
+      stageDistribution: {
+        cold: 0,
+        warm: 0,
+        hot: 0
+      }
+    };
+    
+    // Calculate stage distribution
+    for (const session of chatSessions.values()) {
+      if (stats.stageDistribution[session.stage] !== undefined) {
+        stats.stageDistribution[session.stage]++;
+      }
+    }
+    
+    res.json({ success: true, stats });
+  } catch (error) {
+    console.error('Error getting stats:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to get statistics' 
+    });
+  }
+});
 
 module.exports = router;

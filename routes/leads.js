@@ -4,11 +4,34 @@ const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 
 // In-memory storage for demo (use database in production)
-let leads = new Map();
-let leadHistory = [];
+const leads = new Map();
+const leadHistory = [];
+
+// Input validation middleware
+const validateLead = (req, res, next) => {
+  const { name, email, phone } = req.body;
+  
+  if (!name || !email) {
+    return res.status(400).json({
+      success: false,
+      error: 'Name and email are required'
+    });
+  }
+  
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid email format'
+    });
+  }
+  
+  next();
+};
 
 // Create new lead
-router.post('/', (req, res) => {
+router.post('/', validateLead, (req, res) => {
   try {
     const {
       name,
@@ -21,43 +44,72 @@ router.post('/', (req, res) => {
       sessionId
     } = req.body;
 
+    // Check if email already exists
+    const existingLead = Array.from(leads.values()).find(lead => lead.email === email);
+    if (existingLead) {
+      return res.status(409).json({
+        success: false,
+        error: 'Lead with this email already exists'
+      });
+    }
+
     const leadId = uuidv4();
     const lead = {
       id: leadId,
-      name,
-      email,
-      phone,
-      experience,
-      goals: goals || [],
-      interests: interests || [],
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone ? phone.trim() : null,
+      experience: experience || 'beginner',
+      goals: Array.isArray(goals) ? goals : [],
+      interests: Array.isArray(interests) ? interests : [],
       source: source || 'chatbot',
       sessionId,
       status: 'new',
       stage: 'cold',
       leadScore: 0,
-      createdAt: new Date(),
-      lastContact: new Date(),
-      nextFollowUp: moment().add(1, 'day').toDate(),
+      createdAt: new Date().toISOString(),
+      lastContact: new Date().toISOString(),
+      nextFollowUp: moment().add(1, 'day').toISOString(),
       tags: [],
       notes: [],
-      conversionProbability: 0.1
+      conversionProbability: 0.1,
+      metadata: {
+        userAgent: req.get('User-Agent'),
+        ipAddress: req.ip,
+        referrer: req.get('Referrer')
+      }
     };
 
     leads.set(leadId, lead);
     leadHistory.push({
       action: 'lead_created',
       leadId,
-      timestamp: new Date(),
-      details: { source, experience }
+      timestamp: new Date().toISOString(),
+      details: { source, experience, email: lead.email }
     });
 
-    res.json({
+    // Clean up old history entries
+    cleanupOldHistory();
+
+    res.status(201).json({
       success: true,
-      lead,
+      lead: {
+        id: lead.id,
+        name: lead.name,
+        email: lead.email,
+        stage: lead.stage,
+        leadScore: lead.leadScore,
+        createdAt: lead.createdAt
+      },
       message: "Lead created successfully"
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Error creating lead:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to create lead',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -264,5 +316,76 @@ function calculateConversionProbability(lead) {
   
   return Math.min(probability, 0.9);
 }
+
+// Cleanup old history entries to prevent memory leaks
+function cleanupOldHistory() {
+  const now = Date.now();
+  const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+  
+  const filteredHistory = leadHistory.filter(entry => {
+    const entryAge = now - new Date(entry.timestamp).getTime();
+    return entryAge <= maxAge;
+  });
+  
+  if (filteredHistory.length !== leadHistory.length) {
+    leadHistory.length = 0;
+    leadHistory.push(...filteredHistory);
+  }
+}
+
+// Get leads with pagination
+router.get('/paginated', (req, res) => {
+  try {
+    const { page = 1, limit = 10, stage, status, source, search } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    
+    let filteredLeads = Array.from(leads.values());
+
+    // Apply filters
+    if (stage) {
+      filteredLeads = filteredLeads.filter(lead => lead.stage === stage);
+    }
+    if (status) {
+      filteredLeads = filteredLeads.filter(lead => lead.status === status);
+    }
+    if (source) {
+      filteredLeads = filteredLeads.filter(lead => lead.source === source);
+    }
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredLeads = filteredLeads.filter(lead => 
+        lead.name.toLowerCase().includes(searchLower) ||
+        lead.email.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Sort by lead score (highest first)
+    filteredLeads.sort((a, b) => b.leadScore - a.leadScore);
+
+    // Apply pagination
+    const startIndex = (pageNum - 1) * limitNum;
+    const endIndex = startIndex + limitNum;
+    const paginatedLeads = filteredLeads.slice(startIndex, endIndex);
+
+    res.json({
+      success: true,
+      leads: paginatedLeads,
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(filteredLeads.length / limitNum),
+        totalLeads: filteredLeads.length,
+        hasNextPage: endIndex < filteredLeads.length,
+        hasPrevPage: pageNum > 1
+      }
+    });
+  } catch (error) {
+    console.error('Error getting paginated leads:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to get leads' 
+    });
+  }
+});
 
 module.exports = router;
