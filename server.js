@@ -10,6 +10,9 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
+// Trust proxy for rate limiting (important for Vercel deployment)
+app.set('trust proxy', 1);
+
 // Security and performance middleware
 app.use(helmet({
   contentSecurityPolicy: false, // Disable for Socket.IO compatibility
