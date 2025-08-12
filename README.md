@@ -1,249 +1,166 @@
-# 🚀 Scaler AI-Powered Funnel - Data Engineering Masterclass
+# Scaler AI Funnel
 
-An intelligent, self-serve funnel that attracts, qualifies, and converts leads for Scaler's Data Engineering masterclass using AI-powered chatbot technology.
+An AI-led self-serve funnel for Scaler Data Engineering masterclass with chatbot, lead management, and analytics dashboard.
 
-## ✨ Features
+## Features
 
-### 🤖 AI-Powered Chatbot
-- **24/7 Lead Qualification**: Intelligent chatbot that engages visitors and gathers lead information
-- **Personalized Responses**: Context-aware responses based on user interactions and lead stage
-- **Lead Scoring**: Automatic lead scoring and stage classification (Cold → Warm → Hot)
-- **Smart Recommendations**: AI-driven suggestions for next best actions
+- 🤖 AI-powered chatbot for lead qualification
+- 📊 Real-time analytics dashboard
+- 📧 Email automation system
+- 👥 Lead management system
+- 💬 Real-time chat interface
+- 🎨 Modern, responsive UI with Tailwind CSS
 
-### 📊 Lead Management System
-- **Lead Tracking**: Comprehensive lead lifecycle management
-- **Stage Progression**: Visual funnel stages with automated progression
-- **Lead Scoring**: Intelligent scoring based on engagement, experience, and goals
-- **Notes & History**: Complete interaction history and lead notes
+## Tech Stack
 
-### 📧 Email Automation
-- **Personalized Campaigns**: Dynamic email templates with lead-specific content
-- **Automated Sequences**: Trigger-based email workflows
-- **Performance Tracking**: Open rates, click rates, and conversion metrics
-- **A/B Testing**: Built-in testing capabilities for optimization
+- **Backend**: Node.js, Express.js, Socket.IO
+- **Frontend**: React.js, Tailwind CSS, Framer Motion
+- **Real-time**: Socket.IO for live chat
+- **Styling**: Tailwind CSS with custom components
 
-### 📈 Analytics Dashboard
-- **Real-time Metrics**: Live funnel performance monitoring
-- **Conversion Tracking**: Detailed conversion path analysis
-- **Source Attribution**: Traffic source performance breakdown
-- **Performance Insights**: AI-powered optimization recommendations
-
-### 🎯 Conversion Optimization
-- **Dynamic Content**: Personalized landing page content
-- **Smart CTAs**: Context-aware call-to-action buttons
-- **Lead Nurturing**: Automated follow-up sequences
-- **Upsell Opportunities**: Intelligent product recommendations
-
-## 🏗️ Architecture
-
-```
-Frontend (React) ←→ Backend (Node.js/Express) ←→ AI Services
-     ↓                    ↓                        ↓
-  Chat Interface    Socket.IO Server        OpenAI GPT-4
-  Lead Forms        REST API               Lead Scoring
-  Analytics         Real-time Updates      Recommendations
-```
-
-## 🚀 Quick Start
+## Local Development
 
 ### Prerequisites
-- Node.js 16+ 
+- Node.js (v16 or higher)
 - npm or yarn
-- Modern web browser
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd scaler-ai-funnel
-   ```
-
-2. **Install dependencies**
-   ```bash
-   # Install server dependencies
-   npm install
-   
-   # Install client dependencies
-   cd client
-   npm install
-   cd ..
-   ```
-
-3. **Start the development server**
-   ```bash
-   # Start backend server
-   npm run dev
-   
-   # In a new terminal, start frontend
-   cd client
-   npm start
-   ```
-
-4. **Open your browser**
-   - Frontend: http://localhost:3000
-   - Backend: http://localhost:5000
-
-## 📁 Project Structure
-
-```
-scaler-ai-funnel/
-├── server.js                 # Main server file
-├── routes/                   # API route handlers
-│   ├── chatbot.js           # Chatbot endpoints
-│   ├── leads.js             # Lead management
-│   ├── email.js             # Email automation
-│   └── analytics.js         # Analytics & tracking
-├── client/                   # React frontend
-│   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── contexts/        # React contexts
-│   │   └── App.js          # Main app component
-│   └── public/              # Static assets
-└── README.md                # This file
+1. Clone the repository:
+```bash
+git clone <your-repo-url>
+cd Scaler-Assignment
 ```
 
-## 🔧 Configuration
+2. Install dependencies:
+```bash
+npm run install:all
+```
 
-### Environment Variables
-Create a `.env` file in the root directory:
+3. Create environment variables:
+```bash
+cp env.example .env
+# Edit .env with your configuration
+```
 
-```env
-PORT=5000
-NODE_ENV=development
+4. Start development servers:
+```bash
+# Terminal 1 - Backend
+npm run dev
+
+# Terminal 2 - Frontend
+cd client
+npm start
+```
+
+The app will be available at:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:5000
+
+## Deployment to Vercel
+
+### 1. Prepare for Deployment
+
+1. Build the project locally to ensure no errors:
+```bash
+npm run build
+```
+
+2. Make sure all environment variables are set in Vercel dashboard
+
+### 2. Deploy to Vercel
+
+1. Install Vercel CLI:
+```bash
+npm i -g vercel
+```
+
+2. Deploy:
+```bash
+vercel
+```
+
+3. Follow the prompts and set your environment variables
+
+### 3. Environment Variables for Vercel
+
+Set these in your Vercel dashboard:
+
+```
+NODE_ENV=production
+ALLOWED_ORIGINS=https://your-domain.vercel.app
 OPENAI_API_KEY=your_openai_api_key
-SMTP_HOST=smtp.gmail.com
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password
+JWT_SECRET=your_jwt_secret
 ```
 
-### AI Integration
-The system is designed to integrate with OpenAI GPT-4 for advanced AI capabilities:
+### 4. Custom Domain (Optional)
 
-1. Get your OpenAI API key from [OpenAI Platform](https://platform.openai.com/)
-2. Add it to your `.env` file
-3. The chatbot will automatically use AI-powered responses
+1. Add your custom domain in Vercel dashboard
+2. Update `ALLOWED_ORIGINS` to include your custom domain
 
-## 💡 Usage
+## Project Structure
 
-### 1. Landing Page
-- Visitors land on the main page
-- Learn about the Data Engineering masterclass
-- Click CTA to start chatbot interaction
-
-### 2. AI Chatbot
-- Intelligent lead qualification
-- Gathers experience, goals, and interests
-- Provides personalized recommendations
-- Automatically creates lead records
-
-### 3. Lead Management
-- View all leads in the dashboard
-- Track lead progression through stages
-- Add notes and update information
-- Monitor conversion metrics
-
-### 4. Email Automation
-- Create personalized email campaigns
-- Set up automated sequences
-- Track email performance
-- Optimize based on analytics
-
-### 5. Analytics
-- Monitor funnel performance
-- Track conversion rates
-- Analyze traffic sources
-- Get optimization insights
-
-## 🎨 Customization
-
-### Chatbot Responses
-Edit `server.js` to customize AI responses:
-
-```javascript
-const responses = {
-  greeting: [
-    "Hello! I'm Scaler's AI assistant...",
-    // Add your custom responses
-  ]
-};
+```
+Scaler-Assignment/
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── components/    # React components
+│   │   ├── contexts/      # React contexts
+│   │   └── index.js       # Entry point
+│   ├── public/            # Static files
+│   └── package.json       # Frontend dependencies
+├── routes/                 # API routes
+├── server.js              # Main server file
+├── package.json           # Backend dependencies
+└── vercel.json            # Vercel configuration
 ```
 
-### Email Templates
-Modify email templates in `routes/email.js`:
+## API Endpoints
 
-```javascript
-const defaultTemplates = {
-  welcome: {
-    subject: "Welcome to Scaler!",
-    body: "Your custom email content..."
-  }
-};
-```
+- `POST /api/chatbot/message` - Send chat message
+- `GET /api/leads` - Get all leads
+- `POST /api/leads` - Create new lead
+- `GET /api/analytics` - Get analytics data
+- `POST /api/email/send` - Send email
 
-### Lead Scoring
-Customize lead scoring algorithm in `routes/leads.js`:
+## Socket.IO Events
 
-```javascript
-function calculateLeadScore(lead) {
-  let score = 0;
-  // Add your scoring logic
-  return score;
-}
-```
+- `join_chat` - Join chat session
+- `send_message` - Send message to AI
+- `ai_response` - Receive AI response
 
-## 📊 Performance Metrics
+## Troubleshooting
 
-The system tracks key performance indicators:
+### Build Errors
+- Ensure all dependencies are installed: `npm run install:all`
+- Check for syntax errors in components
+- Verify Tailwind CSS configuration
 
-- **Visitor to Lead Rate**: Percentage of visitors who become leads
-- **Lead to Conversion Rate**: Percentage of leads who convert
-- **Overall Conversion Rate**: End-to-end conversion performance
-- **Source Performance**: Traffic source effectiveness
-- **Lead Stage Distribution**: Cold/Warm/Hot lead breakdown
+### Deployment Issues
+- Check environment variables in Vercel
+- Ensure build completes successfully locally
+- Check Vercel function timeout settings
 
-## 🔮 Future Enhancements
+### CORS Issues
+- Verify `ALLOWED_ORIGINS` environment variable
+- Check frontend proxy configuration
 
-### Phase 2 (2+ weeks)
-- **WhatsApp Integration**: Multi-channel lead engagement
-- **Advanced AI Engine**: GPT-4 integration for dynamic responses
-- **A/B Testing Framework**: Automated testing of funnel elements
-- **Real-time Analytics**: Live dashboard updates
-
-### Phase 3 (1+ month)
-- **Machine Learning**: Predictive lead scoring
-- **Personalization Engine**: Dynamic content optimization
-- **Multi-language Support**: International market expansion
-- **Mobile App**: Native mobile experience
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Test locally
+5. Submit a pull request
 
-## 📝 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see LICENSE file for details
 
-## 🆘 Support
+## Support
 
-For support and questions:
-- Create an issue in the repository
-- Contact the development team
-- Check the documentation
-
-## 🙏 Acknowledgments
-
-- **Scaler Academy** for the Data Engineering curriculum
-- **OpenAI** for AI capabilities
-- **React & Node.js** communities for excellent frameworks
-- **Tailwind CSS** for beautiful UI components
-
----
-
-**Built with ❤️ for Scaler's Data Engineering Masterclass**
-
-*Transform your leads into conversions with AI-powered intelligence!*
+For support, email support@scaler.com or create an issue in this repository.
