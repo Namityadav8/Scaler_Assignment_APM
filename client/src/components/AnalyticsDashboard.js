@@ -1,16 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   TrendingUp, 
   Users, 
-  Target, 
-  BarChart3, 
-  PieChart, 
-  Activity,
-  Eye,
-  MousePointer,
-  CreditCard,
-  Calendar
+  Target,
+  Zap
 } from 'lucide-react';
 
 const AnalyticsDashboard = () => {
@@ -18,11 +11,18 @@ const AnalyticsDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('30');
 
-  useEffect(() => {
-    fetchAnalytics();
+  const getStartDate = useCallback(() => {
+    const days = parseInt(dateRange);
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    return date.toISOString().split('T')[0];
   }, [dateRange]);
 
-  const fetchAnalytics = async () => {
+  const getEndDate = useCallback(() => {
+    return new Date().toISOString().split('T')[0];
+  }, []);
+
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/analytics/funnel?startDate=${getStartDate()}&endDate=${getEndDate()}`);
@@ -36,27 +36,13 @@ const AnalyticsDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getStartDate, getEndDate]);
 
-  const getStartDate = () => {
-    const days = parseInt(dateRange);
-    const date = new Date();
-    date.setDate(date.getDate() - days);
-    return date.toISOString().split('T')[0];
-  };
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
-  const getEndDate = () => {
-    return new Date().toISOString().split('T')[0];
-  };
 
-  const getStageColor = (stage) => {
-    switch (stage) {
-      case 'hot': return 'bg-red-500';
-      case 'warm': return 'bg-yellow-500';
-      case 'cold': return 'bg-blue-500';
-      default: return 'bg-gray-500';
-    }
-  };
 
   if (loading) {
     return (
@@ -93,10 +79,7 @@ const AnalyticsDashboard = () => {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+          <div
             className="bg-white rounded-xl shadow-lg p-6"
           >
             <div className="flex items-center justify-between">
@@ -107,15 +90,12 @@ const AnalyticsDashboard = () => {
                 </p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Eye className="w-6 h-6 text-blue-600" />
+                <Zap className="w-6 h-6 text-blue-600" />
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+          <div
             className="bg-white rounded-xl shadow-lg p-6"
           >
             <div className="flex items-center justify-between">
@@ -129,12 +109,9 @@ const AnalyticsDashboard = () => {
                 <Users className="w-6 h-6 text-green-600" />
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+          <div
             className="bg-white rounded-xl shadow-lg p-6"
           >
             <div className="flex items-center justify-between">
@@ -148,12 +125,9 @@ const AnalyticsDashboard = () => {
                 <Target className="w-6 h-6 text-purple-600" />
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+          <div
             className="bg-white rounded-xl shadow-lg p-6"
           >
             <div className="flex items-center justify-between">
@@ -167,16 +141,13 @@ const AnalyticsDashboard = () => {
                 <TrendingUp className="w-6 h-6 text-yellow-600" />
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Funnel Visualization */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Funnel Chart */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
+          <div
             className="bg-white rounded-xl shadow-lg p-6"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Conversion Funnel</h3>
@@ -222,13 +193,10 @@ const AnalyticsDashboard = () => {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Source Breakdown */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
+          <div
             className="bg-white rounded-xl shadow-lg p-6"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Traffic Sources</h3>
@@ -249,14 +217,11 @@ const AnalyticsDashboard = () => {
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Daily Trends */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
+        <div
           className="bg-white rounded-xl shadow-lg p-6 mb-8"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Trends</h3>
@@ -275,13 +240,10 @@ const AnalyticsDashboard = () => {
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Performance Insights */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+        <div
           className="bg-white rounded-xl shadow-lg p-6"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Insights</h3>
@@ -326,7 +288,7 @@ const AnalyticsDashboard = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

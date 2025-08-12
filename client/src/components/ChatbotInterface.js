@@ -6,15 +6,11 @@ import {
   Send, 
   User, 
   Bot, 
-  Phone, 
-  Mail, 
-  GraduationCap, 
-  Target,
-  TrendingUp,
-  Calendar,
-  CheckCircle,
   AlertCircle,
-  Info
+  TrendingUp,
+  Info,
+  Target,
+  CheckCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 

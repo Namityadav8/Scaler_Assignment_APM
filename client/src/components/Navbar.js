@@ -1,7 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, MessageCircle, BarChart3, Users, Mail, Home } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { 
+  Menu, 
+  MessageCircle, 
+  BarChart3, 
+  Users, 
+  Mail, 
+  Home 
+} from 'lucide-react';
 
 const Navbar = ({ onMenuClick }) => {
   const location = useLocation();

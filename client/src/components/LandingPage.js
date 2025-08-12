@@ -3,15 +3,9 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   ArrowRight, 
-  CheckCircle, 
-  Users, 
-  TrendingUp, 
-  Clock, 
-  Star,
-  MessageCircle,
-  BarChart3,
-  Zap,
-  Target
+  Check, 
+  Users,
+  Zap
 } from 'lucide-react';
 
 const LandingPage = () => {
@@ -34,12 +28,12 @@ const LandingPage = () => {
 
   const features = [
     {
-      icon: MessageCircle,
+      icon: Users,
       title: 'AI-Powered Chatbot',
       description: '24/7 intelligent assistance to answer all your questions about Data Engineering'
     },
     {
-      icon: BarChart3,
+      icon: Users,
       title: 'Personalized Learning Path',
       description: 'Get a customized roadmap based on your current skills and career goals'
     },
@@ -49,7 +43,7 @@ const LandingPage = () => {
       description: 'Join thousands of aspiring Data Engineers and industry professionals'
     },
     {
-      icon: TrendingUp,
+      icon: Users,
       title: 'Career Growth',
       description: 'Learn from real-world projects and industry best practices'
     }
@@ -261,7 +255,7 @@ const LandingPage = () => {
                 viewport={{ once: true }}
                 className="flex items-start space-x-3"
               >
-                <CheckCircle className="w-6 h-6 text-green-500 mt-1 flex-shrink-0" />
+                <Check className="w-6 h-6 text-green-500 mt-1 flex-shrink-0" />
                 <span className="text-gray-700">{benefit}</span>
               </motion.div>
             ))}

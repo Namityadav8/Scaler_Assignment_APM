@@ -1,6 +1,8 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Mail, Plus, BarChart3, Send, Eye, MousePointer } from 'lucide-react';
+import { 
+  Mail, 
+  Plus
+} from 'lucide-react';
 
 const EmailAutomation = () => {
   return (

@@ -60,16 +60,16 @@ export const ChatProvider = ({ children }) => {
 
   useEffect(() => {
     // Initialize Socket.IO connection
-    const socket = io('http://localhost:5000');
+    const socket = io(process.env.REACT_APP_SERVER_URL || 'http://localhost:5000');
     
     socket.on('connect', () => {
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: true });
-      toast.success('Connected to chatbot server');
+      console.log('Connected to chatbot server');
     });
 
     socket.on('disconnect', () => {
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: false });
-      toast.error('Disconnected from chatbot server');
+      console.log('Disconnected from chatbot server');
     });
 
     socket.on('ai_response', (data) => {
@@ -86,7 +86,7 @@ export const ChatProvider = ({ children }) => {
     });
 
     socket.on('error', (error) => {
-      toast.error(error.message || 'An error occurred');
+      console.error('Socket error:', error.message || 'An error occurred');
     });
 
     dispatch({ type: 'SET_SOCKET', payload: socket });

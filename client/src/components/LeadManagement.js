@@ -1,6 +1,8 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Users, Filter, Search, Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { 
+  Plus, 
+  Users
+} from 'lucide-react';
 
 const LeadManagement = () => {
   return (

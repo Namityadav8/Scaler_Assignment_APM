@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 const LeadContext = createContext();
@@ -54,13 +54,8 @@ const leadReducer = (state, action) => {
 export const LeadProvider = ({ children }) => {
   const [state, dispatch] = useReducer(leadReducer, initialState);
 
-  // Fetch leads on component mount
-  useEffect(() => {
-    fetchLeads();
-    fetchAnalytics();
-  }, []);
-
-  const fetchLeads = async (filters = {}) => {
+  // Memoize functions to avoid dependency issues
+  const fetchLeads = useCallback(async (filters = {}) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
@@ -81,7 +76,7 @@ export const LeadProvider = ({ children }) => {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  };
+  }, [state.filters]);
 
   const createLead = async (leadData) => {
     try {
@@ -168,7 +163,7 @@ export const LeadProvider = ({ children }) => {
     }
   };
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       const response = await fetch('/api/leads/analytics/summary');
       const data = await response.json();
@@ -179,7 +174,13 @@ export const LeadProvider = ({ children }) => {
     } catch (error) {
       console.error('Error fetching analytics:', error);
     }
-  };
+  }, []);
+
+  // Fetch leads on component mount
+  useEffect(() => {
+    fetchLeads();
+    fetchAnalytics();
+  }, [fetchLeads, fetchAnalytics]);
 
   const applyFilters = (newFilters) => {
     dispatch({ type: 'SET_FILTERS', payload: newFilters });
