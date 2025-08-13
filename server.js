@@ -23,7 +23,7 @@ app.use(compression());
 // Configure CORS for production
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-  : ['http://localhost:3000'];
+  : ['http://localhost:3000', 'https://*.vercel.app', 'https://*.vercel.app/*'];
 
 const io = socketIo(server, {
   cors: {
@@ -32,7 +32,10 @@ const io = socketIo(server, {
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
   },
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 // Middleware
@@ -174,6 +177,68 @@ async function processAIMessage(message, userContext = {}) {
       schedule: [
         "Our next masterclass is scheduled for this Saturday at 2 PM IST. Would you like me to send you a calendar invite?",
         "We have sessions every week! Let me check the upcoming schedule and get you registered for the next available slot.",
+        "We offer flexible scheduling! What time works best for you? We have morning, afternoon, and evening sessions."
+      ],
+      curriculum: [
+        "Our masterclass covers: Introduction to Data Engineering, ETL Pipeline Basics, Big Data Technologies, and Real-world Case Studies.",
+        "You'll learn: Data Pipeline Design, Cloud Platforms (AWS/Azure), Database Management, and Industry Best Practices.",
+        "The curriculum includes: Data Modeling, ETL Development, Data Warehousing, and hands-on projects with real datasets."
+      ],
+      career: [
+        "Data Engineering is one of the fastest-growing fields! Average salaries range from $80K to $150K depending on experience.",
+        "Great career prospects! Data Engineers are in high demand across all industries - tech, finance, healthcare, and more.",
+        "Excellent choice! Data Engineering offers strong job security and growth opportunities. Many of our students get placed within 3 months."
+      ]
+    };
+
+    const lowerMessage = message.toLowerCase();
+
+    // Keyword-based response selection
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+      return responses.greeting[Math.floor(Math.random() * responses.greeting.length)];
+    }
+    
+    if (lowerMessage.includes('register') || lowerMessage.includes('sign up') || lowerMessage.includes('enroll')) {
+      return responses.registration[Math.floor(Math.random() * responses.registration.length)];
+    }
+    
+    if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('fee') || lowerMessage.includes('free')) {
+      return responses.pricing[Math.floor(Math.random() * responses.pricing.length)];
+    }
+    
+    if (lowerMessage.includes('schedule') || lowerMessage.includes('time') || lowerMessage.includes('when') || lowerMessage.includes('date')) {
+      return responses.schedule[Math.floor(Math.random() * responses.schedule.length)];
+    }
+    
+    if (lowerMessage.includes('curriculum') || lowerMessage.includes('syllabus') || lowerMessage.includes('topics') || lowerMessage.includes('learn')) {
+      return responses.curriculum[Math.floor(Math.random() * responses.curriculum.length)];
+    }
+    
+    if (lowerMessage.includes('career') || lowerMessage.includes('job') || lowerMessage.includes('salary') || lowerMessage.includes('placement')) {
+      return responses.career[Math.floor(Math.random() * responses.career.length)];
+    }
+
+    // Default response for unrecognized messages
+    const defaultResponses = [
+      "That's a great question! Our Data Engineering masterclass covers exactly that. Would you like to learn more about the curriculum?",
+      "I'm glad you're interested! We have both beginner and advanced modules. What's your current experience level?",
+      "Excellent! Our course includes hands-on projects with real-world datasets. Are you looking to switch careers or upskill?",
+      "Perfect! We offer flexible learning schedules. When would you like to start your Data Engineering journey?",
+      "That's exactly what we focus on! Our instructors are industry experts. Would you like to see a sample lesson?",
+      "Great question! We provide job placement assistance and career guidance. What are your career goals?",
+      "Absolutely! Our course is designed for working professionals. How much time can you dedicate weekly?",
+      "That's a common concern! We offer a money-back guarantee. What specific skills are you looking to develop?",
+      "Excellent! We have both online and hybrid options. Which format works better for you?",
+      "Perfect! Our next batch starts soon. Would you like to schedule a free consultation call?"
+    ];
+
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+
+  } catch (error) {
+    console.error('Error processing AI message:', error);
+    return "I apologize, but I'm having trouble processing your message right now. Please try again or contact our support team.";
+  }
+}
         "We offer multiple sessions throughout the week. What time works best for you?"
       ],
       curriculum: [

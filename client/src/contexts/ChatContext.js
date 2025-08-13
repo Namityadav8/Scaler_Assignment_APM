@@ -11,7 +11,8 @@ const initialState = {
   messages: [],
   isTyping: false,
   leadInfo: null,
-  recommendations: []
+  recommendations: [],
+  isFallbackMode: false // Added for fallback mechanism
 };
 
 const chatReducer = (state, action) => {
@@ -50,6 +51,9 @@ const chatReducer = (state, action) => {
         recommendations: []
       };
     
+    case 'SET_FALLBACK_MODE': // Added for fallback mechanism
+      return { ...state, isFallbackMode: action.payload };
+    
     default:
       return state;
   }
@@ -60,7 +64,17 @@ export const ChatProvider = ({ children }) => {
 
   useEffect(() => {
     // Initialize Socket.IO connection
-    const socket = io(process.env.REACT_APP_SERVER_URL || 'http://localhost:5000');
+    // For Vercel deployment, we need to use the same domain
+    const serverUrl = process.env.REACT_APP_SERVER_URL || 
+                     (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
+    
+    const socket = io(serverUrl, {
+      transports: ['websocket', 'polling'],
+      upgrade: true,
+      rememberUpgrade: true,
+      timeout: 20000,
+      forceNew: true
+    });
     
     socket.on('connect', () => {
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: true });
@@ -70,6 +84,16 @@ export const ChatProvider = ({ children }) => {
     socket.on('disconnect', () => {
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: false });
       console.log('Disconnected from chatbot server');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      dispatch({ type: 'SET_CONNECTION_STATUS', payload: false });
+      // Fallback to HTTP polling if Socket.IO fails
+      if (error.message.includes('websocket') || error.message.includes('timeout')) {
+        console.log('Falling back to HTTP polling mode');
+        dispatch({ type: 'SET_FALLBACK_MODE', payload: true });
+      }
     });
 
     socket.on('ai_response', (data) => {
@@ -142,7 +166,7 @@ export const ChatProvider = ({ children }) => {
   };
 
   const sendMessage = async (message) => {
-    if (!state.currentSession || !state.socket) {
+    if (!state.currentSession) {
       toast.error('No active chat session');
       return;
     }
@@ -159,13 +183,53 @@ export const ChatProvider = ({ children }) => {
     dispatch({ type: 'ADD_MESSAGE', payload: userMessage });
     dispatch({ type: 'SET_TYPING', payload: true });
 
-    // Send message to server
-    state.socket.emit('send_message', {
-      message,
-      sessionId: state.currentSession.sessionId,
-      userId: state.currentSession.userId,
-      userContext: state.leadInfo
-    });
+    try {
+      if (state.socket && !state.isFallbackMode) {
+        // Use Socket.IO if available
+        state.socket.emit('send_message', {
+          message,
+          sessionId: state.currentSession.sessionId,
+          userId: state.currentSession.userId,
+          userContext: state.leadInfo
+        });
+      } else {
+        // Fallback to HTTP API
+        const response = await fetch('/api/chatbot/message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message,
+            sessionId: state.currentSession.sessionId,
+            userId: state.currentSession.userId,
+            userContext: state.leadInfo
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          dispatch({
+            type: 'ADD_MESSAGE',
+            payload: {
+              id: Date.now(),
+              text: data.message,
+              sender: 'ai',
+              timestamp: data.timestamp,
+              sessionId: state.currentSession.sessionId
+            }
+          });
+        } else {
+          toast.error('Failed to send message');
+        }
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
+    } finally {
+      dispatch({ type: 'SET_TYPING', payload: false });
+    }
   };
 
   const updateLeadInfo = async (leadInfo) => {

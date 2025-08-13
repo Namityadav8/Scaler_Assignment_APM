@@ -96,6 +96,66 @@ router.get('/session/:sessionId', (req, res) => {
   }
 });
 
+// HTTP API endpoint for sending messages (fallback for Vercel)
+router.post('/message', async (req, res) => {
+  try {
+    const { message, sessionId, userId, userContext } = req.body;
+    
+    if (!message || !sessionId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Message and session ID are required' 
+      });
+    }
+    
+    const session = chatSessions.get(sessionId);
+    if (!session) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Session not found' 
+      });
+    }
+    
+    // Update session activity
+    session.lastActivity = new Date().toISOString();
+    session.messages.push({
+      id: Date.now(),
+      text: message,
+      sender: 'user',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Process the message and generate AI response
+    const aiResponse = await processMessage(message, session, userContext);
+    
+    // Add AI response to session
+    session.messages.push({
+      id: Date.now() + 1,
+      text: aiResponse,
+      sender: 'ai',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Update lead scoring
+    updateLeadScore(session, message);
+    
+    res.json({
+      success: true,
+      message: aiResponse,
+      timestamp: new Date().toISOString(),
+      sessionId: sessionId
+    });
+    
+  } catch (error) {
+    console.error('Error processing message:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to process message',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // Update lead information
 router.post('/update-lead', (req, res) => {
   try {
@@ -149,6 +209,72 @@ router.get('/recommendations/:sessionId', (req, res) => {
 });
 
 // Helper functions
+async function processMessage(message, session, userContext) {
+  try {
+    // Simple AI response logic for demo
+    // In production, this would call OpenAI API
+    const responses = [
+      "That's a great question! Our Data Engineering masterclass covers exactly that. Would you like to learn more about the curriculum?",
+      "I'm glad you're interested! We have both beginner and advanced modules. What's your current experience level?",
+      "Excellent! Our course includes hands-on projects with real-world datasets. Are you looking to switch careers or upskill?",
+      "Perfect! We offer flexible learning schedules. When would you like to start your Data Engineering journey?",
+      "That's exactly what we focus on! Our instructors are industry experts. Would you like to see a sample lesson?",
+      "Great question! We provide job placement assistance and career guidance. What are your career goals?",
+      "Absolutely! Our course is designed for working professionals. How much time can you dedicate weekly?",
+      "That's a common concern! We offer a money-back guarantee. What specific skills are you looking to develop?",
+      "Excellent! We have both online and hybrid options. Which format works better for you?",
+      "Perfect! Our next batch starts soon. Would you like to schedule a free consultation call?"
+    ];
+    
+    // Simple keyword-based responses
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('fee')) {
+      return "Our Data Engineering masterclass is priced competitively at $999. We also offer flexible payment plans and early bird discounts. Would you like to know more about our pricing options?";
+    }
+    
+    if (lowerMessage.includes('duration') || lowerMessage.includes('time') || lowerMessage.includes('length')) {
+      return "The complete Data Engineering masterclass runs for 6 months with flexible learning schedules. You can complete it at your own pace. What's your preferred timeline?";
+    }
+    
+    if (lowerMessage.includes('job') || lowerMessage.includes('career') || lowerMessage.includes('placement')) {
+      return "We have a 95% job placement rate! Our career services include resume building, interview preparation, and direct connections with hiring partners. What's your target role?";
+    }
+    
+    if (lowerMessage.includes('curriculum') || lowerMessage.includes('syllabus') || lowerMessage.includes('topics')) {
+      return "Our curriculum covers: Big Data Processing, ETL Pipeline Design, Data Warehousing, Cloud Platforms (AWS/Azure), and Real-time Analytics. Which area interests you most?";
+    }
+    
+    if (lowerMessage.includes('experience') || lowerMessage.includes('level') || lowerMessage.includes('beginner')) {
+      return "We welcome all experience levels! Our course starts with fundamentals and progresses to advanced concepts. What's your current background in technology?";
+    }
+    
+    // Return a random response if no keywords match
+    return responses[Math.floor(Math.random() * responses.length)];
+    
+  } catch (error) {
+    console.error('Error processing message:', error);
+    return "I apologize, but I'm having trouble processing your message right now. Please try again or contact our support team.";
+  }
+}
+
+function updateLeadScore(session, message) {
+  // Update lead score based on message content and engagement
+  let scoreIncrease = 2; // Base score for each message
+  
+  const lowerMessage = message.toLowerCase();
+  
+  // Increase score for specific keywords indicating interest
+  if (lowerMessage.includes('price') || lowerMessage.includes('cost')) scoreIncrease += 5;
+  if (lowerMessage.includes('enroll') || lowerMessage.includes('register')) scoreIncrease += 10;
+  if (lowerMessage.includes('curriculum') || lowerMessage.includes('syllabus')) scoreIncrease += 3;
+  if (lowerMessage.includes('job') || lowerMessage.includes('career')) scoreIncrease += 5;
+  if (lowerMessage.includes('when') || lowerMessage.includes('start')) scoreIncrease += 4;
+  
+  session.leadScore = Math.min(100, session.leadScore + scoreIncrease);
+  session.stage = determineLeadStage(session.leadScore);
+}
+
 function calculateLeadScore(session) {
   let score = 0;
   
